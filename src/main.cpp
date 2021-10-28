@@ -1,12 +1,44 @@
 #include <Arduino.h>
+/**
+ * ### PINOUT ###
+ * 
+ * Screen :
+ * GND -> GND
+ * VDD -> 5V
+ * SCK -> D1
+ * SDA -> D2
+ * RES -> 3.3V
+ * DC  -> NC
+ * CS  -> GND
+ * 
+ * HC-SR04 Sensor :
+ * VCC  -> 5V
+ * TRIG -> D8
+ * ECHO -> D0
+ * GND  -> GND
+ * 
+ * Lights :
+ * BLACK  -> GND
+ * RED    -> D5
+ * ORANGE -> D6
+ * GREEN  -> D7
+ * 
+ */
+
+
+
+
+
+
+
+
+
+
 #include "user_interface.h"// for os_timer
 #include "FS.h"// for open file on flash
-
 //For scren
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
-
-
 #include <WebSocketsServer.h>// Socket server library in 'lib' folder
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
