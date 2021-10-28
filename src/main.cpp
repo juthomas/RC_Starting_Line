@@ -2,6 +2,10 @@
 #include "user_interface.h"// for os_timer
 #include "FS.h"// for open file on flash
 
+//For scren
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+
 
 #include <WebSocketsServer.h>// Socket server library in 'lib' folder
 #include <ESP8266WebServer.h>
@@ -25,6 +29,16 @@ bool requestSendLapTime = false;
 
 int8_t currentStartSequence = -1;
 
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+
+// SDA => D2
+// SCK => D1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WebSocketsServer webSocket = WebSocketsServer(81);
 ESP8266WebServer server(80);
 
@@ -84,14 +98,15 @@ void ICACHE_RAM_ATTR startSequence(void)
 	}
 	else if (currentStartSequence == 1)
 	{
+		raceStarted = true;
+		raceStartTime = millis();
+		lapStartTime = millis();
 		digitalWrite(D6, LOW);
 		digitalWrite(D7, HIGH);
 		currentStartSequence--;
 	}
 	else if (currentStartSequence == 0)
 	{
-		raceStarted = true;
-		raceStartTime = millis();
 		timer1_disable();
 		currentStartSequence--;
 	}
@@ -134,10 +149,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 		add_knowed_socket_client(num);
 		if (strncmp((char*)payload, "[START]", sizeof("[START]") - 1) == 0)
 		{
+			raceStarted = false;
+			raceStartTime = 0;
+			lapStartTime = 0;
 			engageStart();
 		}
 		else if (strncmp((char*)payload, "[STOP]", sizeof("[STOP]") - 1) == 0)
 		{
+			raceStarted = false;
 			digitalWrite(D5, HIGH);
 			digitalWrite(D6, LOW);
 			digitalWrite(D7, LOW);
@@ -188,6 +207,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 void setup() {
 	// WiFi.softAP(ssid, password);
 	Serial.begin(115200);
+
+	//display setup
+	if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+	{
+		Serial.println(F("SSD1306 1 allocation failed"));
+		for (;;)
+			; // Don't proceed, loop forever
+	}
+	display.setTextSize(1);	   // Normal 1:1 pixel scale
+	display.setTextColor(WHITE); // Draw white text
+	display.setCursor(0, 0);	   // Start at top-left corner
+	display.cp437(true);
+	display.setTextSize(3);
 
  	for (int16_t i = 0; i < 256; i++)
 	{
@@ -289,7 +321,32 @@ void loop() {
 	//   start_sequence();
 	// }
 	// Serial.println("In loop");
-	if (millis() - lastSensorUpdate > SENSOR_UPDATE)
+
+	// display_1.clearDisplay();
+	if (raceStarted)
+	{
+		display.clearDisplay();
+		display.setCursor(0, 0);
+		uint32_t ttTimeD = millis() - raceStartTime;
+		uint32_t lapTimeD = millis() - lapStartTime;
+		display.printf("%03d:%03d\n", ttTimeD / 1000 % 1000, ttTimeD % 1000);
+		display.setCursor(0, 40);
+		display.printf("%03d:%03d\n", lapTimeD / 1000 % 1000, lapTimeD % 1000);
+		display.display();
+	}
+	else
+	{
+		display.clearDisplay();
+		display.setCursor(0, 0);
+		uint32_t ttTimeD = 0;//raceStartTime;
+		uint32_t lapTimeD = 0;//lapStartTime;
+		display.printf("%03d:%03d\n", ttTimeD / 1000 % 1000, ttTimeD % 1000);
+		display.setCursor(0, 40);
+		display.printf("%03d:%03d\n", lapTimeD / 1000 % 1000, lapTimeD % 1000);
+		display.display();
+	}
+
+	if (raceStarted && millis() - lastSensorUpdate > SENSOR_UPDATE)
 	{
 		long duration;
 		int distance;
