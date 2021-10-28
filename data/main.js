@@ -76,15 +76,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	})
 
 
-	setInterval(() => {
-		if (Socket)
-			Socket.send("test");
-	}, 1000);
+	// setInterval(() => {
+	// 	if (Socket)
+	// 		Socket.send("test");
+	// }, 1000);
 	if (Socket)
 	{
 
 		Socket.addEventListener('message', function (event) {
-			console.log('Message from server ', event.data);
+			// console.log('Message from server ', event.data);
+			document.getElementById("rxConsole").value += event.data;
+			document.getElementById("rxConsole").scrollTop = document.getElementById("rxConsole").scrollHeight;
 		});
 	}
 })

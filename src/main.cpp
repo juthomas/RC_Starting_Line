@@ -6,12 +6,18 @@
 #include <WebSocketsServer.h>// Socket server library in 'lib' folder
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
-#define TIMER_UPDATE 5000
+#define SENSOR_UPDATE 5000
+#define MIN_LAP_TIME 5000
 
 os_timer_t myTimer;
 os_timer_t startLightTimer;
 const char* ssid = "RC_Startline";
 const char* password = "88888888";
+bool raceStarted = false;
+uint32_t raceStartTime = 0;
+uint32_t lapStartTime = 0;
+uint32_t lapTime = 0;
+bool requestSendLapTime = false;
 
 int8_t currentStartSequence = -1;
 
@@ -27,6 +33,9 @@ ESP8266WebServer server(80);
 #define D6 12
 #define D7 13
 #define D8 15
+
+#define TRIG D8
+#define ECHO D0
 
 int16_t connected_socket_clients[256] = {-1};
 
@@ -77,6 +86,8 @@ void ICACHE_RAM_ATTR startSequence(void)
 	}
 	else if (currentStartSequence == 0)
 	{
+		raceStarted = true;
+		raceStartTime = millis();
 		timer1_disable();
 		currentStartSequence--;
 	}
@@ -206,36 +217,90 @@ void setup() {
 	pinMode(D5, OUTPUT);
 	pinMode(D6, OUTPUT);
 	pinMode(D7, OUTPUT);
-	pinMode(D8, INPUT_PULLUP);
+	pinMode(ECHO, INPUT);
+	pinMode(TRIG, OUTPUT);
+
+
 
 	os_timer_setfn(&myTimer, fixedLoop, NULL);
-	os_timer_arm(&myTimer, TIMER_UPDATE, true);
+	os_timer_arm(&myTimer, 1000, true);
 	
 	// put your setup code here, to run once:
 }
 
 void fixedLoop(void *pArg)// delay function didnt work in this scope
 {
+	
 	// webSocket.sendTXT("test from slave");
 	for (int16_t i = 0; i < 256; i++)
 	{
 		if (connected_socket_clients[i] != -1)
 		{
-			Serial.print("connected client :");
-			Serial.println(connected_socket_clients[i]);
-			webSocket.sendTXT((uint8_t)connected_socket_clients[i],"test from slave");
+			// Serial.print("connected client :");
+			// Serial.println(connected_socket_clients[i]);
+			// uint32_t currentRaceTime = millis() - raceStartTime;
+			// char *itoaRet = (char*)malloc(sizeof(char) * 100);
+			// webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(currentRaceTime, itoaRet, 10));
+			// webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
+			if (requestSendLapTime == true)
+			{
+
+				requestSendLapTime = false;
+			}
+
 		}
 	}
 }
 
+uint32_t lastSensorUpdate = 0;
 
 void loop() {
 	// if (!digitalRead(D8))
 	// {
 	//   start_sequence();
 	// }
+	// Serial.println("In loop");
+	if (millis() - lastSensorUpdate > 100)
+	{
+		long duration;
+		int distance;
+		lastSensorUpdate = millis();
+		digitalWrite(TRIG, LOW);
+		delayMicroseconds(2);
+		digitalWrite(TRIG, HIGH);
+		delayMicroseconds(10);
+		digitalWrite(TRIG, LOW);
+		duration = pulseIn(ECHO, HIGH, 500000);
 
-		MDNS.update();
+		// Calculating the distance
+		distance = duration*0.034/2;
+		// Prints the distance on the Serial Monitor
+		Serial.print("Distance: ");
+		Serial.println(distance);
+		
+		if (distance < 40 && millis() - lapStartTime > 2000)
+		{
+			lapTime = millis() - lapStartTime;
+			lapStartTime = millis();
+			char *itoaRet = (char*)malloc(sizeof(char) * 100);
+			for (int16_t i = 0; i < 256; i++)
+			{
+				if (connected_socket_clients[i] != -1)
+				{
+					webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(lapTime, itoaRet, 10));
+					webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
+				}
+			}
+			free(itoaRet);
+			// requestSendLapTime = true;
+		}
+		Serial.println(GET_FREE_HEAP);
+
+
+	}
+
+
+	MDNS.update();
 	webSocket.loop();
 	server.handleClient();
 	// put your main code here, to run repeatedly:
