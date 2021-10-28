@@ -6,8 +6,12 @@
 #include <WebSocketsServer.h>// Socket server library in 'lib' folder
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
-#define SENSOR_UPDATE 5000
+#define SENSOR_UPDATE 10
 #define MIN_LAP_TIME 5000
+#define MAX_SENSOR_DISTANCE 40
+
+#define SENSOR_REFINEMENT 5
+bool sensorHistory[SENSOR_REFINEMENT] = {false};
 
 os_timer_t myTimer;
 os_timer_t startLightTimer;
@@ -254,13 +258,38 @@ void fixedLoop(void *pArg)// delay function didnt work in this scope
 
 uint32_t lastSensorUpdate = 0;
 
+
+bool updateSensorHistory(bool currentState)
+{
+// #define SENSOR_REFINEMENT 5
+// bool sensorHistory[SENSOR_REFINEMENT] = {false};
+	bool tmp1;
+	bool tmp2 = currentState;
+
+	for (int i = 0; i < SENSOR_REFINEMENT; i++)
+	{
+		tmp1 = sensorHistory[i];
+		sensorHistory[i] = tmp2;
+		tmp2 = tmp1;
+	}
+
+	for (int i = 0; i < SENSOR_REFINEMENT; i++)
+	{
+		if (sensorHistory[i] == false)
+		{
+			return (false);
+		}
+	}
+	return (true);
+}
+
 void loop() {
 	// if (!digitalRead(D8))
 	// {
 	//   start_sequence();
 	// }
 	// Serial.println("In loop");
-	if (millis() - lastSensorUpdate > 100)
+	if (millis() - lastSensorUpdate > SENSOR_UPDATE)
 	{
 		long duration;
 		int distance;
@@ -278,8 +307,10 @@ void loop() {
 		Serial.print("Distance: ");
 		Serial.println(distance);
 		
-		if (distance < 40 && millis() - lapStartTime > 2000)
+		if (updateSensorHistory(distance < 40 && millis() - lapStartTime > MIN_LAP_TIME))
 		{
+
+
 			lapTime = millis() - lapStartTime;
 			lapStartTime = millis();
 			char *itoaRet = (char*)malloc(sizeof(char) * 100);
