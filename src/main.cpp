@@ -9,8 +9,11 @@
 #define TIMER_UPDATE 5000
 
 os_timer_t myTimer;
+os_timer_t startLightTimer;
 const char* ssid = "RC_Startline";
 const char* password = "88888888";
+
+int8_t currentStartSequence = -1;
 
 WebSocketsServer webSocket = WebSocketsServer(81);
 ESP8266WebServer server(80);
@@ -29,20 +32,11 @@ int16_t connected_socket_clients[256] = {-1};
 
 void fixedLoop(void *pArg);
 
-void start_sequence()
-{
-	digitalWrite(D7, LOW);
-	digitalWrite(D5, HIGH);
-	delay(1000);
-	digitalWrite(D5, LOW);
-	digitalWrite(D6, HIGH);
-	delay(1000);
-	digitalWrite(D6, LOW);
-	digitalWrite(D7, HIGH);
-	delay(1000);
-	digitalWrite(D7, LOW);
+// void start_sequence()
+// {
 
-}
+
+// }
 
 void add_knowed_socket_client(uint8_t num)
 {
@@ -60,6 +54,57 @@ void add_knowed_socket_client(uint8_t num)
 	}
 }
 
+void ICACHE_RAM_ATTR startSequence(void)
+{
+	Serial.println("In isr");;
+	if (currentStartSequence == 3)
+	{
+		digitalWrite(D7, LOW);
+		digitalWrite(D5, HIGH);
+		currentStartSequence--;
+	}
+	else if (currentStartSequence == 2)
+	{
+		digitalWrite(D5, LOW);
+		digitalWrite(D6, HIGH);
+		currentStartSequence--;
+	}
+	else if (currentStartSequence == 1)
+	{
+		digitalWrite(D6, LOW);
+		digitalWrite(D7, HIGH);
+		currentStartSequence--;
+	}
+	else if (currentStartSequence == 0)
+	{
+		timer1_disable();
+		currentStartSequence--;
+	}
+	else 
+	{
+		timer1_disable();
+	}
+}
+
+
+void engageStart()
+{
+	if (currentStartSequence == -1)
+	{
+		currentStartSequence = 3;
+		timer1_attachInterrupt(startSequence);
+		//Clock = 80 Mhz (80 000 000 Hz)
+		timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
+		//1 000 000 = 0.2s
+		timer1_write(5000000); // 1.0s
+
+
+
+		// os_timer_setfn(&startLightTimer, startSequence, NULL);
+		// os_timer_arm(&startLightTimer, 1000, true);
+	}
+}
+
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length){
 	//Serial.println("socket received");
 	if (type == WStype_TEXT)
@@ -68,10 +113,59 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 		// {
 		// 	Serial.print((char) payload[i]);
 		// }
+		
 		Serial.println((char*)payload);
 		Serial.println(num);
 		add_knowed_socket_client(num);
-
+		if (strncmp((char*)payload, "[START]", sizeof("[START]") - 1) == 0)
+		{
+			engageStart();
+		}
+		else if (strncmp((char*)payload, "[STOP]", sizeof("[STOP]") - 1) == 0)
+		{
+			digitalWrite(D5, HIGH);
+			digitalWrite(D6, LOW);
+			digitalWrite(D7, LOW);
+		}
+		else if (strncmp((char*)payload, "[OFF]", sizeof("[OFF]") - 1) == 0)
+		{
+			digitalWrite(D5, LOW);
+			digitalWrite(D6, LOW);
+			digitalWrite(D7, LOW);
+		}
+		else if (strncmp((char*)payload, "[RED]", sizeof("[RED]") - 1) == 0)
+		{
+			if (strstr((char*)payload, "ON"))
+			{
+				digitalWrite(D5, HIGH);
+			}
+			else if (strstr((char*)payload, "OFF"))
+			{
+				digitalWrite(D5, LOW);
+			}
+		}
+		else if (strncmp((char*)payload, "[ORANGE]", sizeof("[ORANGE]") - 1) == 0)
+		{
+			if (strstr((char*)payload, "ON"))
+			{
+				digitalWrite(D6, HIGH);
+			}
+			else if (strstr((char*)payload, "OFF"))
+			{
+				digitalWrite(D6, LOW);
+			}
+		}
+		else if (strncmp((char*)payload, "[GREEN]", sizeof("[GREEN]") - 1) == 0)
+		{
+			if (strstr((char*)payload, "ON"))
+			{
+				digitalWrite(D7, HIGH);
+			}
+			else if (strstr((char*)payload, "OFF"))
+			{
+				digitalWrite(D7, LOW);
+			}
+		}
 		// Serial.println();
 	}
 }
@@ -102,7 +196,7 @@ void setup() {
 	}
 	server.serveStatic("/", SPIFFS, "/index.html");
 	server.serveStatic("/main.js", SPIFFS, "/main.js");
-	server.serveStatic("/main.css", SPIFFS, "/main.css");
+	server.serveStatic("/index.css", SPIFFS, "/index.css");
 	server.begin();
 	MDNS.addService("http", "tcp", 80);
 
@@ -116,7 +210,7 @@ void setup() {
 
 	os_timer_setfn(&myTimer, fixedLoop, NULL);
 	os_timer_arm(&myTimer, TIMER_UPDATE, true);
-
+	
 	// put your setup code here, to run once:
 }
 
@@ -132,7 +226,6 @@ void fixedLoop(void *pArg)// delay function didnt work in this scope
 			webSocket.sendTXT((uint8_t)connected_socket_clients[i],"test from slave");
 		}
 	}
-
 }
 
 
