@@ -7,8 +7,8 @@
  * VDD -> 5V
  * SCK -> D1
  * SDA -> D2
- * RES -> 3.3V
- * DC  -> NC
+ * RES -> 5V
+ * DC  -> GND
  * CS  -> GND
  * 
  * HC-SR04 Sensor :
@@ -24,15 +24,6 @@
  * GREEN  -> D7
  * 
  */
-
-
-
-
-
-
-
-
-
 
 #include "user_interface.h"// for os_timer
 #include "FS.h"// for open file on flash
@@ -54,10 +45,10 @@ os_timer_t startLightTimer;
 const char* ssid = "RC_Startline";
 const char* password = "88888888";
 bool raceStarted = false;
+bool lapTimeOn = true;
 uint32_t raceStartTime = 0;
 uint32_t lapStartTime = 0;
 uint32_t lapTime = 0;
-bool requestSendLapTime = false;
 
 int8_t currentStartSequence = -1;
 
@@ -91,12 +82,6 @@ int16_t connected_socket_clients[256] = {-1};
 
 void fixedLoop(void *pArg);
 
-// void start_sequence()
-// {
-
-
-// }
-
 void add_knowed_socket_client(uint8_t num)
 {
 	for (int16_t i = 0; i < 256; i++)
@@ -113,7 +98,7 @@ void add_knowed_socket_client(uint8_t num)
 	}
 }
 
-void ICACHE_RAM_ATTR startSequence(void)
+void IRAM_ATTR startSequence(void)
 {
 	Serial.println("In isr");;
 	if (currentStartSequence == 3)
@@ -188,6 +173,20 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 		}
 		else if (strncmp((char*)payload, "[STOP]", sizeof("[STOP]") - 1) == 0)
 		{
+			if (raceStarted)
+			{
+				uint32_t raceTime = millis() - raceStartTime;
+				char *itoaRet = (char*)malloc(sizeof(char) * 100);
+				for (int16_t i = 0; i < 256; i++)
+				{
+					if (connected_socket_clients[i] != -1)
+					{
+						webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(raceTime, itoaRet, 10));
+						webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
+					}
+				}
+				free(itoaRet);
+			}
 			raceStarted = false;
 			digitalWrite(D5, HIGH);
 			digitalWrite(D6, LOW);
@@ -232,6 +231,18 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 				digitalWrite(D7, LOW);
 			}
 		}
+		else if (strncmp((char*)payload, "[LAPTIME]", sizeof("[LAPTIME]") - 1) == 0)
+		{
+			if (strstr((char*)payload, "ON"))
+			{
+				lapTimeOn = true;
+			}
+			else if (strstr((char*)payload, "OFF"))
+			{
+				lapTimeOn = false;
+			}
+		}
+
 		// Serial.println();
 	}
 }
@@ -239,7 +250,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 void setup() {
 	// WiFi.softAP(ssid, password);
 	Serial.begin(115200);
-
 	//display setup
 	if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
 	{
@@ -275,7 +285,13 @@ void setup() {
 	}
 	server.serveStatic("/", SPIFFS, "/index.html");
 	server.serveStatic("/main.js", SPIFFS, "/main.js");
-	server.serveStatic("/index.css", SPIFFS, "/index.css");
+	server.serveStatic("/1.mp3", SPIFFS, "/1.mp3");
+	server.serveStatic("/2.mp3", SPIFFS, "/2.mp3");
+	server.serveStatic("/3.mp3", SPIFFS, "/3.mp3");
+	server.serveStatic("/c_est_parti.mp3", SPIFFS, "/c_est_parti.mp3");
+
+
+
 	server.begin();
 	MDNS.addService("http", "tcp", 80);
 
@@ -310,11 +326,7 @@ void fixedLoop(void *pArg)// delay function didnt work in this scope
 			// char *itoaRet = (char*)malloc(sizeof(char) * 100);
 			// webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(currentRaceTime, itoaRet, 10));
 			// webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
-			if (requestSendLapTime == true)
-			{
 
-				requestSendLapTime = false;
-			}
 
 		}
 	}
@@ -360,7 +372,7 @@ void loop() {
 		display.clearDisplay();
 		display.setCursor(0, 0);
 		uint32_t ttTimeD = millis() - raceStartTime;
-		uint32_t lapTimeD = millis() - lapStartTime;
+		uint32_t lapTimeD = lapTimeOn ? millis() - lapStartTime : 0;
 		display.printf("%03d:%03d\n", ttTimeD / 1000 % 1000, ttTimeD % 1000);
 		display.setCursor(0, 40);
 		display.printf("%03d:%03d\n", lapTimeD / 1000 % 1000, lapTimeD % 1000);
@@ -378,7 +390,7 @@ void loop() {
 		display.display();
 	}
 
-	if (raceStarted && millis() - lastSensorUpdate > SENSOR_UPDATE)
+	if (lapTimeOn && raceStarted && millis() - lastSensorUpdate > SENSOR_UPDATE)
 	{
 		long duration;
 		int distance;

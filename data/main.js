@@ -1,4 +1,26 @@
 
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+async function startSound() {
+	var audio;
+	// await sleep(1000);
+	console.log("Hello");
+	audio = new Audio('3.mp3');
+	audio.play();
+	await sleep(1000);
+	audio = new Audio('2.mp3');
+	audio.play();
+	await sleep(1000);
+	audio = new Audio('1.mp3');
+	audio.play();
+	await sleep(1000);
+	audio = new Audio('c_est_parti.mp3');
+	audio.play();
+	console.log("End Of sounds");
+}
+
 
 document.addEventListener("DOMContentLoaded", function (event) {
 	// try
@@ -19,13 +41,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	var redBtn = document.getElementById("redBtn");
 	var orangeBtn = document.getElementById("orangeBtn");
 	var greenBtn = document.getElementById("greenBtn");
+	var lapTimeOnBtn = document.getElementById("lapTimeOnBtn");
 
 	var redOn = false;
 	var orangeOn = false;
 	var greenOn = false;
+	var lapTimeOn = true;
+	lapTimeOnBtn.style.backgroundColor = "green";
 
 
 	startBtn.addEventListener('click', () => {
+		startSound();
 		Socket.send("[START]");
 	})
 	stopBtn.addEventListener('click', () => {
@@ -74,7 +100,19 @@ document.addEventListener("DOMContentLoaded", function (event) {
 			Socket.send("[GREEN] OFF");
 		}
 	})
-
+	lapTimeOnBtn.addEventListener('click', () => {
+		lapTimeOn = !lapTimeOn;
+		if (lapTimeOn)
+		{
+			lapTimeOnBtn.style.backgroundColor = "green";
+			Socket.send("[LAPTIME] ON");
+		}
+		else
+		{
+			lapTimeOnBtn.style.backgroundColor = "";
+			Socket.send("[LAPTIME] OFF");
+		}
+	})
 
 	// setInterval(() => {
 	// 	if (Socket)
