@@ -5,16 +5,16 @@
  * Screen :
  * GND -> GND
  * VDD -> 5V
- * SCK -> D1
- * SDA -> D2
+ * SCK -> D1  BLUE
+ * SDA -> D2  GREEN
  * RES -> 5V
  * DC  -> GND
  * CS  -> GND
  * 
  * HC-SR04 Sensor :
  * VCC  -> 5V
- * TRIG -> D8
- * ECHO -> D0
+ * TRIG -> D8  YELLOW
+ * ECHO -> D0  GREEN
  * GND  -> GND
  * 
  * Lights :
