@@ -6,18 +6,21 @@ function sleep(ms) {
 async function startSound() {
 	var audio;
 	// await sleep(1000);
+	audio = new Audio('Race_Start.mp3');
+	audio.play();
+
 	console.log("Hello");
-	audio = new Audio('3.mp3');
-	audio.play();
-	await sleep(1000);
-	audio = new Audio('2.mp3');
-	audio.play();
-	await sleep(1000);
-	audio = new Audio('1.mp3');
-	audio.play();
-	await sleep(1000);
-	audio = new Audio('c_est_parti.mp3');
-	audio.play();
+	// audio = new Audio('3.mp3');
+	// audio.play();
+	// await sleep(1000);
+	// audio = new Audio('2.mp3');
+	// audio.play();
+	// await sleep(1000);
+	// audio = new Audio('1.mp3');
+	// audio.play();
+	// await sleep(1000);
+	// audio = new Audio('c_est_parti.mp3');
+	// audio.play();
 	console.log("End Of sounds");
 }
 
@@ -123,8 +126,35 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
 		Socket.addEventListener('message', function (event) {
 			// console.log('Message from server ', event.data);
-			document.getElementById("rxConsole").value += event.data;
-			document.getElementById("rxConsole").scrollTop = document.getElementById("rxConsole").scrollHeight;
+
+			if (event.data.startsWith("[LAPSOUND]"))
+			{
+				var audio;
+				// await sleep(1000);
+				audio = new Audio('RaceCheckPoint.mp3');
+				audio.play();
+			}
+			else if (event.data.startsWith("[LAPTIME]"))
+			{
+				document.getElementById("rxConsole").value += (event.data);
+				document.getElementById("rxConsole").scrollTop = document.getElementById("rxConsole").scrollHeight;
+				var audio;
+				// await sleep(1000);
+				audio = new Audio('RaceCheckPoint.mp3');
+				audio.play();
+			}
+			else if (event.data.startsWith("[RACETIME]"))
+			{
+				document.getElementById("rxConsole").value += (event.data);
+				document.getElementById("rxConsole").scrollTop = document.getElementById("rxConsole").scrollHeight;
+				var audio;
+				// await sleep(1000);
+				audio = new Audio('Applause.mp3');
+				audio.play();
+			}
+
+			// document.getElementById("rxConsole").value += event.data;
+			// document.getElementById("rxConsole").scrollTop = document.getElementById("rxConsole").scrollHeight;
 		});
 	}
 })

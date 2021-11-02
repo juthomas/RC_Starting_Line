@@ -139,14 +139,13 @@ void engageStart()
 	if (currentStartSequence == -1)
 	{
 		currentStartSequence = 3;
+		digitalWrite(D7, LOW);
+		digitalWrite(D5, HIGH);
 		timer1_attachInterrupt(startSequence);
 		//Clock = 80 Mhz (80 000 000 Hz)
 		timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 		//1 000 000 = 0.2s
-		timer1_write(5000000); // 1.0s
-
-
-
+		timer1_write(3750000); // 0.75s
 		// os_timer_setfn(&startLightTimer, startSequence, NULL);
 		// os_timer_arm(&startLightTimer, 1000, true);
 	}
@@ -176,16 +175,24 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 			if (raceStarted)
 			{
 				uint32_t raceTime = millis() - raceStartTime;
-				char *itoaRet = (char*)malloc(sizeof(char) * 100);
+				char *socketMessage = (char*)malloc(sizeof(char) * 100);
+				sprintf(socketMessage, "[RACETIME] %02d:%02d:%02d\n", raceTime / 100000 % 100, raceTime / 1000 % 100,raceTime % 1000);
 				for (int16_t i = 0; i < 256; i++)
 				{
 					if (connected_socket_clients[i] != -1)
 					{
-						webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(raceTime, itoaRet, 10));
-						webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
+						webSocket.sendTXT((uint8_t)connected_socket_clients[i], socketMessage);
 					}
 				}
-				free(itoaRet);
+				// for (int16_t i = 0; i < 256; i++)
+				// {
+				// 	if (connected_socket_clients[i] != -1)
+				// 	{
+				// 		webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(raceTime, socketMessage, 10));
+				// 		webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
+				// 	}
+				// }
+				free(socketMessage);
 			}
 			raceStarted = false;
 			digitalWrite(D5, HIGH);
@@ -285,10 +292,10 @@ void setup() {
 	}
 	server.serveStatic("/", SPIFFS, "/index.html");
 	server.serveStatic("/main.js", SPIFFS, "/main.js");
-	server.serveStatic("/1.mp3", SPIFFS, "/1.mp3");
-	server.serveStatic("/2.mp3", SPIFFS, "/2.mp3");
-	server.serveStatic("/3.mp3", SPIFFS, "/3.mp3");
-	server.serveStatic("/c_est_parti.mp3", SPIFFS, "/c_est_parti.mp3");
+	server.serveStatic("/index.css", SPIFFS, "/index.css");
+	server.serveStatic("/Applause.mp3", SPIFFS, "/Applause.mp3");
+	server.serveStatic("/Race_Start.mp3", SPIFFS, "/Race_Start.mp3");
+	server.serveStatic("/RaceCheckPoint.mp3", SPIFFS, "/RaceCheckPoint.mp3");
 
 
 
@@ -390,7 +397,7 @@ void loop() {
 		display.display();
 	}
 
-	if (lapTimeOn && raceStarted && millis() - lastSensorUpdate > SENSOR_UPDATE)
+	if (raceStarted && millis() - lastSensorUpdate > SENSOR_UPDATE)
 	{
 		long duration;
 		int distance;
@@ -414,16 +421,32 @@ void loop() {
 
 			lapTime = millis() - lapStartTime;
 			lapStartTime = millis();
-			char *itoaRet = (char*)malloc(sizeof(char) * 100);
-			for (int16_t i = 0; i < 256; i++)
+			char *socketMessage = (char*)malloc(sizeof(char) * 100);
+
+			if (lapTimeOn)
 			{
-				if (connected_socket_clients[i] != -1)
+				sprintf(socketMessage, "[LAPTIME] %02d:%02d:%02d\n", lapTime / 100000 % 100, lapTime / 1000 % 100,lapTime % 1000);
+				for (int16_t i = 0; i < 256; i++)
 				{
-					webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(lapTime, itoaRet, 10));
-					webSocket.sendTXT((uint8_t)connected_socket_clients[i], "\n");
+					if (connected_socket_clients[i] != -1)
+					{
+						// webSocket.sendTXT((uint8_t)connected_socket_clients[i], ltoa(lapTime, socketMessage, 10));
+						webSocket.sendTXT((uint8_t)connected_socket_clients[i], socketMessage);
+					}
 				}
 			}
-			free(itoaRet);
+			else
+			{
+				sprintf(socketMessage, "[LAPSOUND]\n");
+				for (int16_t i = 0; i < 256; i++)
+				{
+					if (connected_socket_clients[i] != -1)
+					{
+						webSocket.sendTXT((uint8_t)connected_socket_clients[i], socketMessage);
+					}
+				}
+			}
+			free(socketMessage);
 			// requestSendLapTime = true;
 		}
 		Serial.println(GET_FREE_HEAP);
