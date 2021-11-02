@@ -2,6 +2,11 @@
 	background-color: "";
 }
 
+
+#rxConsole {
+	min-width: 200px;
+	min-height: 400px;
+}
 /* #lapTimeOnBtn {
 	background-color: green;
 } */

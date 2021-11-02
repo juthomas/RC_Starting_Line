@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
   </head>
   <body>
-    <h1>Hello World !</h1>
+    <h1>FPV RACE</h1>
     <button id="startBtn" class="button">Start</button>
     <button id="stopBtn" class="button">Stop</button>
     <button id="offBtn" class="button">Off</button>
@@ -16,9 +16,24 @@
     <button id="greenBtn" class="button">Green</button>
     <br/>
     <button id="lapTimeOnBtn" class="button">Lap Time</button>
-    <br/>
-    <textarea id="rxConsole" readonly></textarea>
-
+    <button id="clearBtn" class="button">Clear</button>
+    
+  </br>
+  <textarea id="rxConsole" readonly></textarea>
+  
+  <br/>
+  <br/>
+  <br/>
+  <br/>
+  <br/>
+  <input id="sensorUpdateInput" type="number" placeholder="Sensor update (ms)"/>
+  <button id="sensorUpdateBtn">Ok</button>
+  <br>
+  <input id="sensorRefinementInput" type="number" placeholder="Sensor refinement"/>
+  <button id="sensorRefinementBtn">Ok</button>
+  <br>
+  <input id="sensorMaxDistanceInput" type="number" placeholder="Sensor max distance (cm)"/>
+  <button id="sensorMaxDistanceBtn">Ok</button>
 
     <script src="main.js"></script>
   </body>

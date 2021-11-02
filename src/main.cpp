@@ -33,12 +33,17 @@
 #include <WebSocketsServer.h>// Socket server library in 'lib' folder
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
-#define SENSOR_UPDATE 10
+// #define SENSOR_UPDATE 10
 #define MIN_LAP_TIME 5000
-#define MAX_SENSOR_DISTANCE 40
+// #define MAX_SENSOR_DISTANCE 40
 
-#define SENSOR_REFINEMENT 5
-bool sensorHistory[SENSOR_REFINEMENT] = {false};
+int16_t g_sensorUpdate = 5;
+int16_t g_sensorRefinement = 2;
+int16_t g_maxSensorDistance = 40;
+
+// #define SENSOR_REFINEMENT 3
+#define SENSOR_REFINEMENT_MAX 20
+bool sensorHistory[SENSOR_REFINEMENT_MAX] = {false};
 
 os_timer_t myTimer;
 os_timer_t startLightTimer;
@@ -249,7 +254,21 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 				lapTimeOn = false;
 			}
 		}
-
+		else if (strncmp((char*)payload, "[SETSENSORUPDATE]", sizeof("[SETSENSORUPDATE]") - 1) == 0)
+		{
+			// g_sensorUpdate = atoi((char*)payload + sizeof("[SETSENSORUPDATE]") - 1);
+			Serial.printf("Sensor update value str:%s nu:%d\n", (char*)payload + sizeof("[SETSENSORUPDATE]") - 1, g_sensorUpdate);
+		}
+		else if (strncmp((char*)payload, "[SETREFINEMENT]", sizeof("[SETREFINEMENT]") - 1) == 0)
+		{
+			g_sensorRefinement = atoi((char*)payload + sizeof("[SETREFINEMENT]") - 1);
+			// Serial.printf("Sensor update value str:%s nu:%d\n", (char*)payload + sizeof("[SETREFINEMENT]") - 1, g_sensorUpdate);
+		}
+		else if (strncmp((char*)payload, "[SETSENSORMAXDISTANCE]", sizeof("[SETSENSORMAXDISTANCE]") - 1) == 0)
+		{
+			g_maxSensorDistance = atoi((char*)payload + sizeof("[SETSENSORMAXDISTANCE]") - 1);
+			// Serial.printf("Sensor update value str:%s nu:%d\n", (char*)payload + sizeof("[SETREFINEMENT]") - 1, g_sensorUpdate);
+		}
 		// Serial.println();
 	}
 }
@@ -344,19 +363,19 @@ uint32_t lastSensorUpdate = 0;
 
 bool updateSensorHistory(bool currentState)
 {
-// #define SENSOR_REFINEMENT 5
-// bool sensorHistory[SENSOR_REFINEMENT] = {false};
+// #define g_sensorRefinement 5
+// bool sensorHistory[g_sensorRefinement] = {false};
 	bool tmp1;
 	bool tmp2 = currentState;
 
-	for (int i = 0; i < SENSOR_REFINEMENT; i++)
+	for (int i = 0; i < g_sensorRefinement; i++)
 	{
 		tmp1 = sensorHistory[i];
 		sensorHistory[i] = tmp2;
 		tmp2 = tmp1;
 	}
 
-	for (int i = 0; i < SENSOR_REFINEMENT; i++)
+	for (int i = 0; i < g_sensorRefinement; i++)
 	{
 		if (sensorHistory[i] == false)
 		{
@@ -397,7 +416,7 @@ void loop() {
 		display.display();
 	}
 
-	if (raceStarted && millis() - lastSensorUpdate > SENSOR_UPDATE)
+	if (raceStarted && millis() - lastSensorUpdate > g_sensorUpdate)
 	{
 		long duration;
 		int distance;
@@ -415,7 +434,7 @@ void loop() {
 		Serial.print("Distance: ");
 		Serial.println(distance);
 		
-		if (updateSensorHistory(distance < 40 && millis() - lapStartTime > MIN_LAP_TIME))
+		if (updateSensorHistory(distance < g_maxSensorDistance && ((lapTimeOn && millis() - lapStartTime > MIN_LAP_TIME) || (!lapTimeOn && millis() - lapStartTime > 100 &&  millis() - raceStartTime > MIN_LAP_TIME) )))
 		{
 
 

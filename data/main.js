@@ -45,6 +45,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	var orangeBtn = document.getElementById("orangeBtn");
 	var greenBtn = document.getElementById("greenBtn");
 	var lapTimeOnBtn = document.getElementById("lapTimeOnBtn");
+	var clearBtn = document.getElementById("clearBtn");
+	
+	var sensorUpdateInput = document.getElementById("sensorUpdateInput");
+	var sensorUpdateBtn = document.getElementById("sensorUpdateBtn");
+	var sensorRefinementInput = document.getElementById("sensorRefinementInput");
+	var sensorRefinementBtn = document.getElementById("sensorRefinementBtn");
+	var sensorMaxDistanceInput = document.getElementById("sensorMaxDistanceInput");
+	var sensorMaxDistanceBtn = document.getElementById("sensorMaxDistanceBtn");
+
+
+
 
 	var redOn = false;
 	var orangeOn = false;
@@ -116,6 +127,30 @@ document.addEventListener("DOMContentLoaded", function (event) {
 			Socket.send("[LAPTIME] OFF");
 		}
 	})
+	clearBtn.addEventListener('click', () => {
+		document.getElementById("rxConsole").value = "";
+	})
+
+	sensorUpdateBtn.addEventListener('click', () => {
+		if (sensorUpdateInput.value)
+		{
+			Socket.send("[SETSENSORUPDATE] " + sensorUpdateInput.value);
+		}
+	})
+	sensorRefinementBtn.addEventListener('click', () => {
+		if (sensorRefinementInput.value)
+		{
+			Socket.send("[SETREFINEMENT] " + sensorRefinementInput.value);
+		}
+	})
+	sensorMaxDistanceBtn.addEventListener('click', () => {
+		if (sensorMaxDistanceInput.value)
+		{
+			Socket.send("[SETSENSORMAXDISTANCE] " + sensorMaxDistanceInput.value);
+		}
+
+	})
+
 
 	// setInterval(() => {
 	// 	if (Socket)
