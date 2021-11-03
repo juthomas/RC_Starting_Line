@@ -1,12 +1,131 @@
+@font-face {
+	font-family: 'TrackManiaFont';
+	src: url('trackmania.ttf') format('truetype');
+  }
+  @font-face {
+	font-family: 'TextFont';
+	src: url('Begok.ttf') format('truetype');
+  }
+
+  /* #lapTimeOnBtn {
+	  background-color: green;
+	} */
+	
+	
+#getYellowLapBtn {
+	background-color: rgb(184, 184, 51);
+}
+
+#getWhiteLapBtn {
+	background-color: rgb(202, 202, 202);
+}
+
+#getRedLapBtn {
+	background-color: rgb(221, 82, 82);
+}
+
+#getBlueLapBtn {
+	background-color: rgb(106, 106, 235);
+}
+
+
+body {
+	text-align: center;
+	color: white;
+	/* height: 100%; */
+	background: linear-gradient(rgb(19, 19, 19), rgb(110, 110, 110));
+	height: 100%;
+	margin: 0;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	font-family: 'TextFont';
+	/* font-family: 'TrackManiaFont'; */
+
+	/* background-size: 100%; */
+}
+
 #redBtn {
 	background-color: "";
 }
 
+h1 {
+	font-family: 'TrackManiaFont';
+
+	font-size: 70px;
+}
+
+.lightsAndLap {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.lap {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.timeConsoleAndLights {
+	margin-top: 20px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+.startLights {
+	margin: 20px;
+	background-color: rgb(29, 29, 29);
+	height: min-content;
+	width: min-content;
+	border: solid;
+	border-radius: 50px;
+}
+.lightBtn {
+	font-family: 'TextFont';
+	font-size: 15px;
+
+	border-radius: 50px;
+	height: 90px;
+	width: 90px;
+	margin: 3px;
+}
+.standardButton {
+	font-family: 'TextFont';
+
+	/* font-family: 'TrackManiaFont'; */
+	font-size: 13px;
+	padding: 10px;
+	margin: 40px 0px;
+	background-color: #dadada;
+	border-radius: 7px;
+	box-shadow: 2px 2px 5px #e2e2e2;
+	margin: 10px;
+
+}
+
+.timeConsole {
+	margin: 20px;
+	border: solid;
+	border-color: white;
+	border-radius: 10px;
+	padding-top: 10px;
+
+}
+.sensorInput {
+	width: 200px;
+}
 
 #rxConsole {
-	min-width: 200px;
+	border: solid;
+	border-color: white;
+	min-width: 250px;
 	min-height: 400px;
+	border-radius: 10px;
+
+	margin: 20px;
 }
-/* #lapTimeOnBtn {
-	background-color: green;
-} */
+
+input[type=checkbox] {
+    transform: scale(1.5);
+	margin-right: 10px;
+}
