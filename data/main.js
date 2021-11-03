@@ -16,10 +16,10 @@ function sleep(ms) {
 
 async function startSound() {
 
-	yellowTimer = Date.now();
-	whiteTimer = Date.now();
-	redTimer = Date.now();
-	blueTimer = Date.now();
+	yellowTimer = Date.now() + 2250; 
+	whiteTimer = Date.now() + 2250;
+	redTimer = Date.now() + 2250;
+	blueTimer = Date.now() + 2250;
 	// console.log(yellowTimer)
 	var audio;
 	// await sleep(1000);
