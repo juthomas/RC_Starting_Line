@@ -181,7 +181,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 			{
 				uint32_t raceTime = millis() - raceStartTime;
 				char *socketMessage = (char*)malloc(sizeof(char) * 100);
-				sprintf(socketMessage, "[RACETIME] %02d:%02d:%02d\n", raceTime / 60000 % 100, raceTime / 1000 % 60,raceTime % 1000);
+				sprintf(socketMessage, "[RACETIME] %02d:%02d:%03d\n", raceTime / 60000 % 100, raceTime / 1000 % 60,raceTime % 1000);
 				for (int16_t i = 0; i < 256; i++)
 				{
 					if (connected_socket_clients[i] != -1)
@@ -314,8 +314,10 @@ void setup() {
 	server.serveStatic("/index.css", SPIFFS, "/index.css");
 	server.serveStatic("/Applause.mp3", SPIFFS, "/Applause.mp3");
 	server.serveStatic("/Race_Start.mp3", SPIFFS, "/Race_Start.mp3");
+	server.serveStatic("/RaceCheckPoint.mp3", SPIFFS, "/RaceCheckPoint.mp3");
 	server.serveStatic("/Begok.ttf", SPIFFS, "/Begok.ttf");
 	server.serveStatic("/trackmania.ttf", SPIFFS, "/trackmania.ttf");
+	server.serveStatic("/fpv.ico", SPIFFS, "/fpv.ico");
 
 
 
@@ -445,7 +447,7 @@ void loop() {
 
 			if (lapTimeOn)
 			{
-				sprintf(socketMessage, "[LAPTIME] %02d:%02d:%02d\n", lapTime / 60000 % 100, lapTime / 1000 % 60,lapTime % 1000);
+				sprintf(socketMessage, "[LAPTIME] %02d:%02d:%03d\n", lapTime / 60000 % 100, lapTime / 1000 % 60,lapTime % 1000);
 				for (int16_t i = 0; i < 256; i++)
 				{
 					if (connected_socket_clients[i] != -1)
