@@ -16,10 +16,7 @@ function sleep(ms) {
 
 async function startSound() {
 
-	yellowTimer = Date.now() + 2250; 
-	whiteTimer = Date.now() + 2250;
-	redTimer = Date.now() + 2250;
-	blueTimer = Date.now() + 2250;
+
 	// console.log(yellowTimer)
 	var audio;
 	// await sleep(1000);
@@ -88,12 +85,48 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	var lapTimeOn = true;
 	lapTimeOnBtn.style.backgroundColor = "green";
 
+	document.onkeydown = function(event){
+		switch(event.code) {
+		  case "Digit1" : /* le code 32 correspond à la touche Espace */
+		  	getYellowLapBtn.click();
+		  break;
+		  case "Digit2" : /* le code 32 correspond à la touche Ctrl */
+		  getWhiteLapBtn.click();
+
+		  break;
+		  case "Digit3" : /* le code 32 correspond à la touche Ctrl */
+		  getRedLapBtn.click();
+		
+		  break;
+		case "Digit4" : /* le code 32 correspond à la touche Ctrl */
+		getBlueLapBtn.click();
+	  
+		break;
+		case "KeyS" : /* le code 32 correspond à la touche Ctrl */
+		startBtn.click();
+	  
+		break;
+		case "KeyF" : /* le code 32 correspond à la touche Ctrl */
+		stopBtn.click();
+	  
+		break;
+		  default :
+			/* Si la touche n'est pas répertoriée dans le script, on affiche le code de cette touche pour pouvoir l'ajouter (utile seulement pendant le développement, pour connaître le code des touches */
+			console.log(event.keyCode);
+		  break;
+		}
+	  }
+
 
 	startBtn.addEventListener('click', () => {
 		if (soundChk.checked)
 		{
 			startSound();
 		}
+		yellowTimer = Date.now() + 2250; 
+		whiteTimer = Date.now() + 2250;
+		redTimer = Date.now() + 2250;
+		blueTimer = Date.now() + 2250;
 		Socket.send("[START]");
 	})
 	stopBtn.addEventListener('click', () => {
